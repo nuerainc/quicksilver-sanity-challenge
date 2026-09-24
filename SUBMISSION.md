@@ -35,7 +35,8 @@ required, running against real Azure LLM + Sanity infrastructure
 end-to-end (verified: plan → kernel authorization → independent review →
 approve → simulated execute → observe → rollback). The **Decision log**
 (https://quicksilver-seven.vercel.app/decisions) shows every decision on
-record with its full process history.
+record with its full process history. **Ask the company** on the home page
+runs the read-only query agent (`/api/query`) against the same data.
 
 **Studio:** https://qkslvr.sanity.studio (a Sanity login with project
 access is required; the dataset itself is public, see below).

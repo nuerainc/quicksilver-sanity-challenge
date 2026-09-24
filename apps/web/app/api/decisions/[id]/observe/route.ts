@@ -1,13 +1,16 @@
 /**
  * POST /api/decisions/[id]/observe — Day 12 closed-loop: observe + diagnose.
  *
- * Reads the latest metric associated with the executed decision, compares
- * to baseline, and surfaces:
+ * Reads the metric the executor wrote for THIS decision (linked by
+ * `relatedDecision`), compares it to baseline, and surfaces:
  *   - whether the action improved, held, or degraded state
  *   - whether a rollback is recommended
- *   - a one-line diagnosis grounded in supporting evidence
+ *   - a one-line diagnosis, citing the decision's own high-confidence
+ *     evidence when the metric moved the wrong way
  *
- * Idempotent: same input → same output.
+ * Metrics written before the link existed have no `relatedDecision`; for
+ * those decisions only, it falls back to the most recent unlinked metric.
+ * Decisions that haven't executed yet have nothing to observe.
  *
  * With QUICKSILVER_PROCESS_ENGINE=on, the result is also recorded on the
  * decision as `observedDeviation`, which is the fact the Decision Lifecycle's
@@ -58,17 +61,35 @@ export async function POST(
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
     }
 
-    // Latest metric (any). Demo uses simulated single-metric world.
-    const metric = await client.fetch<{
+    if (['proposed', 'awaiting-approval', 'approved', 'rejected'].includes(decision.status)) {
+      return NextResponse.json({
+        decisionId: id,
+        status: decision.status,
+        observed: null,
+        diagnosis: 'Nothing to observe yet: this decision has not been executed.',
+        deviationDetected: false,
+        recommendedRollback: null,
+      })
+    }
+
+    type Metric = {
       _id: string
       name: string
       value: number
       baseline: number
       unit: string
       direction: 'lower-better' | 'higher-better'
-    } | null>(
-      `*[_type == "metric"] | order(updatedAt desc)[0]{ _id, name, value, baseline, unit, direction }`,
-    )
+    }
+    const METRIC_FIELDS = '{ _id, name, value, baseline, unit, direction }'
+    // This decision's own metric first; older metrics carry no link.
+    const metric =
+      (await client.fetch<Metric | null>(
+        `*[_type == "metric" && relatedDecision._ref == $id] | order(updatedAt desc)[0]${METRIC_FIELDS}`,
+        { id },
+      )) ??
+      (await client.fetch<Metric | null>(
+        `*[_type == "metric" && !defined(relatedDecision)] | order(updatedAt desc)[0]${METRIC_FIELDS}`,
+      ))
 
     if (!metric) {
       return NextResponse.json({
@@ -86,21 +107,24 @@ export async function POST(
     const improved = metric.direction === 'lower-better' ? metric.value < metric.baseline : metric.value > metric.baseline
     const pctChange = (delta / metric.baseline) * 100
 
-    // Look up the historical-incident #17 evidence for a grounded diagnosis.
+    // When the metric moved the wrong way, point at the strongest evidence the
+    // decision itself cited (e.g. Historical Incident #17) as a lead for the
+    // underlying cause.
     const evidenceIds = decision.evidenceIds ?? []
-    const contradictingEvidence = evidenceIds.length
+    const strongEvidence = worse && evidenceIds.length
       ? await client.fetch<Array<{ _id: string; title: string; claim: string; confidence: number }>>(
           `*[_type == "evidence" && _id in $ids && confidence > 0.85]{ _id, title, claim, confidence } | order(confidence desc)[0..2]`,
           { ids: evidenceIds },
         )
       : []
 
-    const diagnosis =
-      contradictingEvidence.length > 0
-        ? `High-confidence evidence contradicts the change: ${contradictingEvidence[0]?.claim ?? ''}`
-        : improved
-          ? 'Change moved the metric in the expected direction.'
-          : 'No change detected.'
+    const diagnosis = worse
+      ? strongEvidence.length > 0
+        ? `Metric moved the wrong way. The strongest evidence this decision cited points at the cause: ${strongEvidence[0]?.claim ?? ''}`
+        : 'Metric moved the wrong way after the action.'
+      : improved
+        ? 'Change moved the metric in the expected direction.'
+        : 'No change detected.'
 
     const lifecycle = await loadDecisionLifecycle(client)
     if (lifecycle.kind === 'ready') {

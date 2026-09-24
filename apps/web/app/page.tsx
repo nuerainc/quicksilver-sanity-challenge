@@ -326,6 +326,8 @@ export default function HomePage() {
         )}
       </section>
 
+      <AskTheCompany />
+
       {plan && (
         <PlanAndDecisions
           plan={plan}
@@ -848,6 +850,162 @@ function ProcessStrip({ process }: { process: ProcessInfo }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ── Ask the company: the query agent, read-only ──────────────────────────
+// POST /api/query runs packages/agent/src/query.ts: the model reads the
+// company model through Sanity Context MCP (GROQ + Knowledge Base) and must
+// answer in a fixed schema. Nothing is written; no decision is created.
+
+type QueryAnswer = {
+  question: string
+  entities: Array<{ id: string; name: string; entityType: string; role: string | null; reasoning: string }>
+  capabilities: Array<{ id: string; name: string; riskLevel: number }>
+  policies: Array<{ id: string; name: string; scope: string }>
+  supportingContext: string[]
+  confidence: number
+}
+
+const EXAMPLE_QUESTIONS = [
+  'Who can perform process parameter modification?',
+  'Which policies conflict over production parameter changes?',
+  'What evidence contradicts the parameter-drift explanation for CNC 2?',
+]
+
+function AskTheCompany() {
+  const [question, setQuestion] = useState(EXAMPLE_QUESTIONS[0]!)
+  const [answer, setAnswer] = useState<QueryAnswer | null>(null)
+  const [asking, setAsking] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function ask(q: string) {
+    setQuestion(q)
+    setAsking(true)
+    setErr(null)
+    setAnswer(null)
+    try {
+      const res = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question: q }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail ?? data.error ?? 'Query failed')
+      setAnswer(data as QueryAnswer)
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setAsking(false)
+    }
+  }
+
+  return (
+    <section className="mb-8 rounded border border-quicksilver-border bg-quicksilver-panel p-6">
+      <h2 className="mb-1 font-mono text-xs uppercase tracking-widest text-quicksilver-accent">
+        Ask the company
+      </h2>
+      <p className="mb-3 text-xs text-quicksilver-accent">
+        Read-only. The query agent answers from the company model in Sanity, through Context MCP, and cites what it found.
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          className="flex-1 rounded border border-quicksilver-border bg-quicksilver-bg p-2 font-mono text-sm text-quicksilver-signal focus:border-quicksilver-quicksilver focus:outline-none"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !asking && question.trim().length >= 3) ask(question.trim())
+          }}
+          aria-label="Question about the company"
+        />
+        <button
+          onClick={() => ask(question.trim())}
+          disabled={asking || question.trim().length < 3}
+          className="rounded border border-quicksilver-quicksilver bg-quicksilver-quicksilver/5 px-4 py-2 font-mono text-xs uppercase tracking-widest text-quicksilver-signal transition hover:bg-quicksilver-quicksilver/15 disabled:opacity-40"
+        >
+          {asking ? 'Querying Sanity…' : 'Ask'}
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {EXAMPLE_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            onClick={() => ask(q)}
+            disabled={asking}
+            className="rounded border border-quicksilver-border px-2 py-1 text-xs text-quicksilver-accent transition hover:border-quicksilver-accent hover:text-quicksilver-signal disabled:opacity-40"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+      {asking && (
+        <p className="mt-3 font-mono text-xs text-quicksilver-accent">
+          Reading the company model through Sanity Context MCP (usually 20–40 seconds)…
+        </p>
+      )}
+      {err && <p className="mt-3 font-mono text-xs text-red-400">{err}</p>}
+      {answer && (
+        <div className="mt-4 space-y-4 border-t border-quicksilver-border pt-4">
+          {answer.entities.length > 0 && (
+            <div>
+              <h3 className="mb-2 font-mono text-xs uppercase tracking-widest text-quicksilver-accent">Who</h3>
+              <ul className="space-y-2">
+                {answer.entities.map((e) => (
+                  <li key={e.id} className="text-sm">
+                    <span className="text-quicksilver-signal">{e.name}</span>{' '}
+                    <span className="font-mono text-xs text-quicksilver-accent">
+                      {e.entityType}{e.role ? ` · ${e.role}` : ''} · {e.id}
+                    </span>
+                    <p className="mt-0.5 text-xs text-quicksilver-accent">{e.reasoning}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(answer.capabilities.length > 0 || answer.policies.length > 0) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {answer.capabilities.length > 0 && (
+                <div>
+                  <h3 className="mb-2 font-mono text-xs uppercase tracking-widest text-quicksilver-accent">Capabilities</h3>
+                  <ul className="space-y-1 text-sm text-quicksilver-signal">
+                    {answer.capabilities.map((c) => (
+                      <li key={c.id}>
+                        {c.name} <span className="font-mono text-xs text-quicksilver-accent">base risk {c.riskLevel}/5 · {c.id}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {answer.policies.length > 0 && (
+                <div>
+                  <h3 className="mb-2 font-mono text-xs uppercase tracking-widest text-quicksilver-accent">Policies</h3>
+                  <ul className="space-y-1 text-sm text-quicksilver-signal">
+                    {answer.policies.map((p) => (
+                      <li key={p.id}>
+                        {p.name} <span className="font-mono text-xs text-quicksilver-accent">{p.scope}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          {answer.supportingContext.length > 0 && (
+            <div>
+              <h3 className="mb-2 font-mono text-xs uppercase tracking-widest text-quicksilver-accent">Grounding</h3>
+              <ul className="list-disc space-y-1 pl-5 text-xs text-quicksilver-accent">
+                {answer.supportingContext.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="font-mono text-xs text-quicksilver-accent">
+            Model-reported confidence: {Math.round(answer.confidence * 100)}%
+          </p>
+        </div>
+      )}
+    </section>
   )
 }
 

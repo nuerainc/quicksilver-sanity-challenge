@@ -117,10 +117,11 @@ stateDiagram-v2
 ## Try it in 60 seconds
 
 1. Open **[quicksilver-seven.vercel.app](https://quicksilver-seven.vercel.app)**. There's no login, and the objective is pre-filled.
-2. Click **Send to Quicksilver**. A real plan takes about a minute.
-3. Scroll to **Decisions**. Each card shows the kernel's risk and verdict and a **Process** line (where it is, what can happen next). Click **Show reasoning & evidence** for the policies, evidence and the dashed **Independent review** from the reviewer model.
-4. **Approve** a card, **Execute** it (simulated) and **Observe** the metric. If it moves the wrong way, **propose a rollback**.
-5. Open the **[Decision log](https://quicksilver-seven.vercel.app/decisions)** to see every transition, who took it (kernel, human or executor) and when.
+2. Try **Ask the company** first: a read-only question like *"Who can perform process parameter modification?"* The query agent answers from Sanity through Context MCP, with its sources, in 20–40 seconds.
+3. Click **Send to Quicksilver**. A real plan takes about a minute.
+4. Scroll to **Decisions**. Each card shows the kernel's risk and verdict and a **Process** line (where it is, what can happen next). Click **Show reasoning & evidence** for the policies, evidence and the dashed **Independent review** from the reviewer model.
+5. **Approve** a card, **Execute** it (simulated) and **Observe** the metric. If it moves the wrong way, **propose a rollback**.
+6. Open the **[Decision log](https://quicksilver-seven.vercel.app/decisions)** to see every transition, who took it (kernel, human or executor) and when.
 
 ## Proven live, not just in tests
 

@@ -132,6 +132,23 @@ export async function commitTransition(
   at: string,
   extra: Record<string, unknown> = {},
 ) {
+  return transitionPatch(client, docId, rev, definition, decision, actor, at, extra).commit()
+}
+
+/**
+ * The same optimistic-locked patch as `commitTransition`, uncommitted, so a
+ * route can put it in one transaction with other writes (all or nothing).
+ */
+export function transitionPatch(
+  client: SanityClient,
+  docId: string,
+  rev: string,
+  definition: ProcessDefinition,
+  decision: TransitionDecision,
+  actor: ProcessActor,
+  at: string,
+  extra: Record<string, unknown> = {},
+) {
   const f = transitionFields(definition, decision, actor, at)
   return client
     .patch(docId)
@@ -139,7 +156,6 @@ export async function commitTransition(
     .set({ status: f.status, process: f.process, ...extra })
     .setIfMissing({ processHistory: [] })
     .append('processHistory', [f.historyEntry])
-    .commit()
 }
 
 /** Is this a Sanity revision-mismatch error (someone else moved the document first)? */

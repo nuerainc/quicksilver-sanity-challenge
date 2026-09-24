@@ -104,6 +104,12 @@ rollback itself fails, a human can retry it. The **Decision log →** link
 which transition moved it, who or what took it (kernel, human, executor),
 and when.
 
+**Ask the company** (above the decisions) is the query agent on its own,
+read-only: ask *"Who can perform process parameter modification?"* or
+*"Which policies conflict over production parameter changes?"* and it
+queries Sanity through Context MCP and answers in a fixed schema (people,
+capabilities, policies, and the grounding it used). Nothing is written.
+
 ## Code
 
 Repo: https://github.com/nuerainc/quicksilver-sanity-challenge (public, MIT licensed)

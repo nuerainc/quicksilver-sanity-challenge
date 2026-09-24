@@ -926,6 +926,23 @@ the catch-all for every non-rejected decision auto-approve doesn't take, so
 tightening the ceiling is a one-number edit (new kernel test; 39/39). The
 README was rewritten for the public repo.
 
+**Sep 24: last fixes before the freeze.** An independent re-audit (code as
+the only source of truth) found two real bugs and one hidden feature:
+- *Observe read the wrong metric.* It took the newest metric in the
+  dataset, so observing one decision could use another's result and feed a
+  wrong `observedDeviation` to the rollback guard. It now reads the metric
+  linked to that decision (`relatedDecision`), falls back to the newest
+  unlinked metric only for decisions executed before the link existed, and
+  refuses to observe a decision that hasn't executed. The diagnosis only
+  cites evidence when the metric moved the wrong way.
+- *A half-failed rollback could strand a decision.* The parent's move to
+  `rollback-proposed` and the new rollback decision were two writes; if the
+  second failed, `retry-rollback` could never fire. They are now one Sanity
+  transaction, still guarded by `ifRevisionId`.
+- *The query agent had no UI.* `/api/query` existed but nothing called it.
+  The home page now has **Ask the company**: read-only questions answered
+  from Sanity through Context MCP, in the query agent's fixed schema.
+
 ---
 
 ## Errors encountered (chronological, all environments)

@@ -18,7 +18,7 @@ import { z } from 'zod'
 import { authorizeTransition, nextAutomaticTransition } from '@quicksilver/kernel'
 import {
   KERNEL_ACTOR,
-  commitTransition,
+  transitionPatch,
   factsFromDecision,
   invalidDefinitionBody,
   isRevisionConflict,
@@ -108,21 +108,12 @@ export async function POST(
       if (!step.allowed) return NextResponse.json(refusal(step, definition), { status: 409 })
 
       const now = new Date().toISOString()
-      try {
-        await commitTransition(client, original._id, original._rev, definition, step, actor, now)
-      } catch (err) {
-        if (isRevisionConflict(err)) {
-          return NextResponse.json({ error: 'This decision changed while you were acting on it. Reload and try again.' }, { status: 409 })
-        }
-        throw err
-      }
-
       // The rollback is its own decision, entering the same lifecycle.
       const rollbackId = `decision-rollback-${id}-${Date.now()}`
       const rollbackFacts = { 'decision.kind': 'rollback' }
       const first = nextAutomaticTransition(definition, definition.initialState, rollbackFacts)
       const firstFields = first ? transitionFields(definition, first, KERNEL_ACTOR, now) : null
-      await client.create({
+      const rollbackDoc = {
         _id: rollbackId,
         _type: 'decision',
         kind: 'rollback',
@@ -143,7 +134,25 @@ export async function POST(
         status: firstFields?.status ?? definition.initialState,
         ...(firstFields ? { process: firstFields.process, processHistory: [firstFields.historyEntry] } : {}),
         createdAt: now,
-      })
+      }
+
+      // One transaction: the parent's move to rollback-proposed and the new
+      // rollback decision land together or not at all. (Two separate writes
+      // could leave the parent in rollback-proposed with no attempt on record,
+      // which retry-rollback can't recover from.)
+      try {
+        await client
+          .transaction()
+          .patch(transitionPatch(client, original._id, original._rev, definition, step, actor, now))
+          .create(rollbackDoc)
+          .commit()
+      } catch (err) {
+        if (isRevisionConflict(err)) {
+          return NextResponse.json({ error: 'This decision changed while you were acting on it. Reload and try again.' }, { status: 409 })
+        }
+        throw err
+      }
+
 
       return NextResponse.json({
         rollbackDecisionId: rollbackId,

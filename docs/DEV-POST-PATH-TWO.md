@@ -71,7 +71,8 @@ where it sits in the Decision Lifecycle and what can happen next. **Show
 reasoning & evidence** opens the policies, the evidence, and a dashed
 **INDEPENDENT REVIEW** block the reviewer model fills in live.
 Then: approve, execute (simulated), watch the metric move. **Decision
-log →** (top right) shows every decision's full process history.
+log →** (top right) shows every decision's full process history. **Ask
+the company** runs the query agent on its own for read-only questions.
 
 ## Code
 
