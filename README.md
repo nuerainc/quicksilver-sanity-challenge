@@ -123,6 +123,42 @@ stateDiagram-v2
 5. **Approve** a card, **Execute** it (simulated) and **Observe** the metric. If it moves the wrong way, **propose a rollback**.
 6. Open the **[Decision log](https://quicksilver-seven.vercel.app/decisions)** to see every transition, who took it (kernel, human or executor) and when.
 
+## Screenshots
+
+Captured from the live deployment.
+
+**Ask the company.** A read-only question answered from Sanity through Context MCP: the evidence, policies and grounding the query agent actually retrieved.
+
+![Ask the company](docs/images/demo/02-ask-the-company.png)
+
+**The plan.** The planner decomposes the objective, citing real document IDs, the capabilities it needs and the policy constraints it found.
+
+![The plan](docs/images/demo/03-plan.png)
+
+**A risk-5 parameter change, expanded.** Applicable policies with scope and priority, evidence with confidence, the kernel's policy-conflict flag, and the dashed Independent review (advisory, never a gate).
+
+![A risk-5 parameter change, expanded](docs/images/demo/04-policy-conflict-and-review.png)
+
+**A human approves.** The Process line moves to *Approved (via approve)* and shows what can happen next.
+
+![A human approves](docs/images/demo/05-approved.png)
+
+**Executed (simulated) and observed.** The metric the executor wrote for this decision, baseline vs. current.
+
+![Executed (simulated) and observed](docs/images/demo/06-executed-and-observed.png)
+
+**A full rollback, in the Decision log.** Every transition with who took it (kernel, human, executor) and when, ending *rolled-back*.
+
+![A full rollback, in the Decision log](docs/images/demo/08-rolled-back-history.png)
+
+**The rollback is its own decision**, routed to a human, approved and executed.
+
+![The rollback is its own decision](docs/images/demo/09-rollback-decision.png)
+
+**The autonomous lane.** A risk-1 diagnostic the kernel auto-approved (`auto-approve · quicksilver-kernel`), then executed.
+
+![The autonomous lane](docs/images/demo/10-auto-approved.png)
+
 ## Proven live, not just in tests
 
 | Check | Result |
@@ -194,7 +230,7 @@ Set `QUICKSILVER_PROCESS_ENGINE=on` to have the kernel run the Decision Lifecycl
 | | |
 |---|---|
 | Project ID | `d280bqjc` |
-| Dataset | `production`, **public** (query it: `https://d280bqjc.apicdn.sanity.io/data/query/production?query=*`) |
+| Dataset | `production`, **public** (query it: `https://d280bqjc.apicdn.sanity.io/v2024-10-01/data/query/production?query=*[_type=="policy"]{name,scope,priority}`) |
 | Studio | https://qkslvr.sanity.studio (needs a Sanity login with project access) |
 | Organization | `ou5ydq271` |
 

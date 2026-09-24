@@ -58,7 +58,7 @@ The judging criteria explicitly call out that judges will inspect the
 dataset directly. `d280bqjc/production` is set to **public** visibility
 (confirmed in Sanity Manage → Datasets):
 
-1. Public dataset URL form: `https://d280bqjc.apicdn.sanity.io/data/query/production?query=*` (judges can hit this with any GROQ, no token required).
+1. Public dataset URL form: `https://d280bqjc.apicdn.sanity.io/v2024-10-01/data/query/production?query=*[_type=="policy"]{name,scope,priority}` (swap in any GROQ query, no token required).
 2. To reproduce or re-verify this yourself (from `apps/studio`): `npx sanity dataset visibility set production public`, then confirm with `npx sanity dataset list`.
 3. Note that a *public dataset* is still separate from write access — creating/editing decisions through the app still requires the project-scoped `SANITY_AUTH_TOKEN` described below; only reads are open.
 
