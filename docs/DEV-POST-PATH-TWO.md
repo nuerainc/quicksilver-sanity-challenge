@@ -57,7 +57,14 @@ scope cut, not an oversight. You type an objective, see the proposed
 plan, see the kernel's reasoning on each candidate action, see policies
 and evidence cited, click Approve or Reject. After approval, you can
 simulate execution, observe the metric, and propose a rollback if
-needed. All without leaving the page.
+needed. All without leaving the page. A second box, **Ask the company**,
+answers read-only questions straight from the company model.
+
+**Who it's for:** the operator or founder who wants AI agents doing real
+work inside a company without handing them the keys. Every action goes
+through the company's own capabilities, policies and approval rules,
+written as content in Sanity, and a human stays in the loop wherever
+that playbook says so.
 
 ## Demo
 
@@ -134,6 +141,55 @@ adding a real Knowledge Base as a second Context MCP mode (rather than
 leaving `knowledge_base_read` as a prompt-only reference nothing ever
 called), and wiring the independent reviewer into the live decision path
 instead of leaving it exercised only by a standalone health check.
+
+### The tools, the prompts, and where the model got stuck
+
+No single AI-native IDE did this. **MiniMax Agent** built it from an
+empty repo, **Claude Code** (running in Cowork) took it from "works
+locally" to deployed, hardened and tested, and **VS Code** was where I
+ran terminal commands and typed every secret myself; neither agent ever
+entered a credential.
+
+Prompts that worked:
+
+- *"follow the plan"* and *"march away friend"*. MiniMax had a day-by-day
+  plan with the schema locked on Day 1, so short "keep going" prompts
+  were enough to carry it through the build.
+- *"whats best for the competition? thats the deciding factor as we can
+  always fork and proceed along a new path"*. Asked when Claude assessed
+  a YAML workflow engine. It settled the design: processes live in
+  Sanity as content, not YAML in git, and the kernel runs them.
+- *"you should be able to access the local build shouldnt you?"* Claude
+  had said it couldn't verify a change; this pushback made it run a real
+  install and build in its own sandbox.
+- *"then we need to create tests that will cause it to come up"*. That
+  became `npm run e2e:live`, which forces a failed rollback and a broken
+  process definition on the live site: 44 of 44 checks passed.
+- *"...completely reassess our submission from top to bottom...
+  using the actual code base as the final say"*. A fresh audit that
+  trusted only the code found docs that overclaimed, two real bugs, and
+  a Sanity session token in an old transcript. All fixed; tokens rotated.
+
+Where the model got stuck, and how we course-corrected:
+
+- **The same strict-schema bug, three times.** Azure's strict structured
+  output rejects any Zod field with `.default()` or `.optional()`, and
+  the models kept writing them (`financialExposure`, the reviewer's
+  arrays, the query agent's `role`). The fix that stuck was a test that
+  checks every model schema the way the SDK actually sends it.
+- **Guessing tool arguments.** `knowledge_base_read` failed until the
+  agent introspected the tool's JSON Schema instead of guessing its
+  argument shape.
+- **The wrong Workflows package.** The first pick,
+  `@sanity-labs/sanity-plugin-workflows`, needs Studio 6.9+ and writes
+  its own `status` field onto documents. Checking the published package
+  itself led to `sanity-plugin-workflow`, which fits Studio 5 and never
+  touches the kernel's `status`.
+- **Toolchain drift.** `npx sanity@latest schema deploy` failed with
+  "exports is not defined"; pinning to the project's own CLI fixed it.
+- **Free inference didn't hold.** *"we need free inference options"* led
+  to a local-model detour; *"lets use azure free then?"* is where it
+  landed, and production runs on Azure OpenAI.
 
 What I deliberately **didn't** build, and why:
 - A multi-objective dashboard. One CEO-intent box, one plan, one decision
