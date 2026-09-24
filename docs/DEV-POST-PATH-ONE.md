@@ -116,35 +116,35 @@ All captured from the live deployment.
 
 **Ask the company.** A read-only question answered from Sanity through Context MCP: the evidence, policies and grounding the query agent actually retrieved.
 
-![Ask the company](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/02-ask-the-company.png)
+![Ask the company](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/02-ask-the-company.png)
 
 **The plan.** The planner decomposes the objective, citing real document IDs, the capabilities it needs and the policy constraints it found.
 
-![The plan](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/03-plan.png)
+![The plan](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/03-plan.png)
 
 **A risk-5 parameter change, expanded.** Applicable policies with scope and priority, evidence with confidence, the kernel's policy-conflict flag, and the dashed Independent review (advisory, never a gate).
 
-![A risk-5 parameter change, expanded](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/04-policy-conflict-and-review.png)
+![A risk-5 parameter change, expanded](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/04-policy-conflict-and-review.png)
 
 **A human approves.** The Process line moves to *Approved (via approve)* and shows what can happen next.
 
-![A human approves](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/05-approved.png)
+![A human approves](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/05-approved.png)
 
 **Executed (simulated) and observed.** The metric the executor wrote for this decision, baseline vs. current.
 
-![Executed (simulated) and observed](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/06-executed-and-observed.png)
+![Executed (simulated) and observed](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/06-executed-and-observed.png)
 
 **A full rollback, in the Decision log.** Every transition with who took it (kernel, human, executor) and when, ending *rolled-back*.
 
-![A full rollback, in the Decision log](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/08-rolled-back-history.png)
+![A full rollback, in the Decision log](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/08-rolled-back-history.png)
 
 **The rollback is its own decision**, routed to a human, approved and executed.
 
-![The rollback is its own decision](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/09-rollback-decision.png)
+![The rollback is its own decision](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/09-rollback-decision.png)
 
 **The autonomous lane.** A risk-1 diagnostic the kernel auto-approved (`auto-approve · quicksilver-kernel`), then executed.
 
-![The autonomous lane](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/main/docs/images/demo/10-auto-approved.png)
+![The autonomous lane](https://raw.githubusercontent.com/nuerainc/quicksilver-sanity-challenge/fb4b900/docs/images/demo/10-auto-approved.png)
 
 ## Code
 
